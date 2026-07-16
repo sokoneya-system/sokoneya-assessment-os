@@ -49,18 +49,57 @@
     white-space:nowrap;
   }
   main{max-width:1050px;margin:24px auto;padding:0 16px 60px}
-  .progress{
+  .stepper{
     display:grid;
-    grid-template-columns:repeat(5,1fr);
+    grid-template-columns:auto 1fr auto 1fr auto 1fr auto 1fr auto;
+    align-items:start;
     gap:8px;
-    margin-bottom:18px;
+    margin-bottom:22px;
   }
-  .progress div{
-    height:7px;
-    background:#d1d5db;
+  .step{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-width:52px;
+  }
+  .circle{
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    border:2px solid #cbd5e1;
+    background:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:700;
+    color:#64748b;
+  }
+  .label{
+    margin-top:7px;
+    font-size:12px;
+    color:#64748b;
+    white-space:nowrap;
+  }
+  .line{
+    height:3px;
+    background:#dbe1e8;
+    margin-top:18px;
     border-radius:999px;
   }
-  .progress .active{background:var(--accent)}
+  .step.done .circle{
+    background:#0f766e;
+    border-color:#0f766e;
+    color:#fff;
+  }
+  .step.done .label{color:#0f766e;font-weight:700}
+  .step.active .circle{
+    background:#111827;
+    border-color:#111827;
+    color:#fff;
+    box-shadow:0 0 0 5px rgba(17,24,39,.10);
+  }
+  .step.active .label{color:#111827;font-weight:700}
+  .line.done{background:#0f766e}
   .card{
     background:var(--card);
     border:1px solid var(--line);
@@ -215,7 +254,7 @@
   .report h3{margin-top:0}
   @media (max-width:700px){
     .grid{grid-template-columns:1fr}
-    .progress{grid-template-columns:repeat(5,1fr)}
+    .stepper{gap:3px}.circle{width:32px;height:32px;font-size:13px}.line{margin-top:15px}.label{font-size:10px}
     .score{grid-template-columns:1fr}
     .header-inner{align-items:flex-start}
   }
@@ -239,8 +278,16 @@
 </header>
 
 <main>
-  <div class="progress">
-    <div class="active" id="p1"></div><div id="p2"></div><div id="p3"></div><div id="p4"></div><div id="p5"></div>
+  <div class="stepper" aria-label="査定の進行状況">
+    <div class="step active" id="s1"><div class="circle">1</div><div class="label">写真</div></div>
+    <div class="line" id="l1"></div>
+    <div class="step" id="s2"><div class="circle">2</div><div class="label">AI確認</div></div>
+    <div class="line" id="l2"></div>
+    <div class="step" id="s3"><div class="circle">3</div><div class="label">確認</div></div>
+    <div class="line" id="l3"></div>
+    <div class="step" id="s4"><div class="circle">4</div><div class="label">判定</div></div>
+    <div class="line" id="l4"></div>
+    <div class="step" id="s5"><div class="circle">5</div><div class="label">完了</div></div>
   </div>
 
   <section class="card" id="step1">
@@ -421,7 +468,12 @@
 function go(n){
   for(let i=1;i<=5;i++){
     document.getElementById('step'+i).classList.toggle('hidden', i!==n);
-    document.getElementById('p'+i).classList.toggle('active', i<=n);
+    const step = document.getElementById('s'+i);
+    step.classList.toggle('done', i < n);
+    step.classList.toggle('active', i === n);
+    if (i < 5) {
+      document.getElementById('l'+i).classList.toggle('done', i < n);
+    }
   }
   const labels=[
     '',
