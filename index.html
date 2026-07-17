@@ -4,6 +4,11 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>そこね屋査定OS - COACH長財布 UI試作</title>
+<!-- UI設計原則:
+1. システムが次の行動を1つだけ指示する
+2. 1画面につき1目的
+3. スタッフは判断せず、確認して実行する
+-->
 <style>
   :root{
     --bg:#f5f6f8;
@@ -150,6 +155,33 @@
   .full-button{width:100%;margin-top:10px}
   .photo-feedback{margin-top:12px;padding:11px 13px;background:#ecfdf5;border-left:4px solid var(--ok);border-radius:8px;font-size:14px}
   button:disabled{opacity:.45;cursor:not-allowed}
+
+  .compact-actions{justify-content:flex-start}
+  .auto-progress{
+    margin-top:12px;
+    text-align:center;
+    font-size:13px;
+    color:var(--muted);
+  }
+  .photo-feedback{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .photo-feedback::before{
+    content:"✓";
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    background:var(--ok);
+    color:#fff;
+    font-weight:700;
+    flex:0 0 auto;
+  }
+
 
   .field{
     display:flex;
@@ -340,13 +372,13 @@
       </div>
 
       <div class="photo-feedback hidden" id="photoFeedback">
-        写真を確認しました。次へ進めます。
+        写真を確認しました。次の撮影へ進みます。
       </div>
+      <div class="auto-progress hidden" id="autoProgress">約1秒後に自動で進みます</div>
     </div>
 
-    <div class="actions">
-      <button class="secondary hidden" id="photoBackButton" onclick="previousPhoto()">前の写真</button>
-      <button class="primary" id="photoNextButton" onclick="nextPhoto()" disabled>次の写真へ</button>
+    <div class="actions compact-actions">
+      <button class="secondary hidden" id="photoBackButton" onclick="previousPhoto()">前の写真に戻る</button>
     </div>
   </section>
 
@@ -487,6 +519,7 @@ const photoSteps = [
   ['ファスナー・金属部分','ファスナーと金属部分を近くから撮ってください','文字・形・傷が確認できるようにします','ぼやけない距離で、正面から撮影してください。']
 ];
 let currentPhotoStep = 0;
+let autoAdvanceTimer = null;
 const capturedPhotos = new Array(photoSteps.length).fill(null);
 
 function renderPhotoStep(){
@@ -498,10 +531,9 @@ function renderPhotoStep(){
   document.getElementById('capturePoint').textContent = item[3];
   document.getElementById('photoBackButton').classList.toggle('hidden', currentPhotoStep===0);
   const hasPhoto = !!capturedPhotos[currentPhotoStep];
-  document.getElementById('photoNextButton').disabled = !hasPhoto;
-  document.getElementById('photoNextButton').textContent = currentPhotoStep===photoSteps.length-1 ? 'AIで確認する' : '次の写真へ';
   document.getElementById('previewWrap').classList.toggle('hidden', !hasPhoto);
   document.getElementById('photoFeedback').classList.toggle('hidden', !hasPhoto);
+  document.getElementById('autoProgress').classList.toggle('hidden', !hasPhoto);
   document.querySelector('.camera-button').classList.toggle('hidden', hasPhoto);
   if(hasPhoto) document.getElementById('photoPreview').src = capturedPhotos[currentPhotoStep];
 }
@@ -511,29 +543,34 @@ document.addEventListener('DOMContentLoaded',()=>{
     const file = event.target.files && event.target.files[0];
     if(!file) return;
     const reader = new FileReader();
-    reader.onload = e => { capturedPhotos[currentPhotoStep]=e.target.result; renderPhotoStep(); };
+    reader.onload = e => {
+      capturedPhotos[currentPhotoStep]=e.target.result;
+      renderPhotoStep();
+      clearTimeout(autoAdvanceTimer);
+      autoAdvanceTimer = setTimeout(() => {
+        if(currentPhotoStep < photoSteps.length - 1){
+          currentPhotoStep++;
+          document.getElementById('cameraInput').value='';
+          renderPhotoStep();
+          window.scrollTo({top:0,behavior:'smooth'});
+        } else {
+          go(2);
+        }
+      }, 1200);
+    };
     reader.readAsDataURL(file);
   });
 });
 function retakePhoto(){
+  clearTimeout(autoAdvanceTimer);
   capturedPhotos[currentPhotoStep]=null;
   document.getElementById('cameraInput').value='';
   renderPhotoStep();
   document.getElementById('cameraInput').click();
 }
 function previousPhoto(){
+  clearTimeout(autoAdvanceTimer);
   if(currentPhotoStep>0){ currentPhotoStep--; renderPhotoStep(); window.scrollTo({top:0,behavior:'smooth'}); }
-}
-function nextPhoto(){
-  if(!capturedPhotos[currentPhotoStep]) return;
-  if(currentPhotoStep<photoSteps.length-1){
-    currentPhotoStep++;
-    document.getElementById('cameraInput').value='';
-    renderPhotoStep();
-    window.scrollTo({top:0,behavior:'smooth'});
-  } else {
-    go(2);
-  }
 }
 
 function go(n){
