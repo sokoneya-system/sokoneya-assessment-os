@@ -133,6 +133,24 @@
     margin-bottom:10px;
     font-size:13px;
   }
+
+  .capture-card{max-width:620px;margin:18px auto 0;border:1px solid var(--line);border-radius:16px;padding:18px;background:#fff}
+  .capture-progress{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+  .capture-progress span{font-size:12px;color:var(--muted);background:#f1f5f9;padding:6px 9px;border-radius:999px}
+  .sample-photo{min-height:245px;border-radius:14px;background:linear-gradient(145deg,#eef2f7,#f8fafc);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;border:1px solid #dbe3ec}
+  .sample-icon{font-size:48px;margin-bottom:12px}
+  .sample-main{font-weight:700;font-size:17px;margin-bottom:7px}
+  .sample-sub{font-size:13px;color:var(--muted);line-height:1.6}
+  .capture-help{margin:14px 0;padding:12px 14px;background:#f8fafc;border-radius:10px}
+  .capture-help p{margin:5px 0 0;font-size:13px;color:var(--muted)}
+  .camera-button{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:15px;background:#111827;color:#fff;border-radius:12px;cursor:pointer;font-size:16px;font-weight:700}
+  .camera-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+  .preview-wrap{margin-top:14px}
+  .preview-wrap img{width:100%;max-height:360px;object-fit:contain;border-radius:12px;border:1px solid var(--line);background:#f8fafc}
+  .full-button{width:100%;margin-top:10px}
+  .photo-feedback{margin-top:12px;padding:11px 13px;background:#ecfdf5;border-left:4px solid var(--ok);border-radius:8px;font-size:14px}
+  button:disabled{opacity:.45;cursor:not-allowed}
+
   .field{
     display:flex;
     flex-direction:column;
@@ -291,50 +309,44 @@
   </div>
 
   <section class="card" id="step1">
-    <h1>まず、商品の写真を撮ります</h1>
-    <p class="lead">画面に表示された順番で撮影してください。難しい言葉は使いません。写真が足りない場合は、あとでAIが教えます。</p>
-    <div class="grid">
-      <div class="photo-box">
-        <div class="example">見本：財布の正面全体</div>
-        <strong>1. 正面</strong>
-        <small>財布全体が切れないように撮ってください。</small>
-        <input type="file" accept="image/*">
+    <h1>商品の写真を撮ります</h1>
+    <p class="lead">画面の案内どおり、1枚ずつ撮影してください。撮った写真はAIが確認します。</p>
+
+    <div class="capture-card">
+      <div class="capture-progress">
+        <span id="photoCount">1 / 6</span>
+        <strong id="photoTitle">財布の正面</strong>
       </div>
-      <div class="photo-box">
-        <div class="example">見本：財布の背面全体</div>
-        <strong>2. 裏側</strong>
-        <small>財布を裏返し、全体を撮ってください。</small>
-        <input type="file" accept="image/*">
+
+      <div class="sample-photo">
+        <div class="sample-icon">📷</div>
+        <div class="sample-main" id="sampleMain">財布全体が入るように撮ってください</div>
+        <div class="sample-sub" id="sampleSub">机の中央に置き、上からまっすぐ撮影します</div>
       </div>
-      <div class="photo-box">
-        <div class="example">見本：財布を開いた状態</div>
-        <strong>3. 内側全体</strong>
-        <small>カード入れや中の形が分かるように撮ってください。</small>
-        <input type="file" accept="image/*">
+
+      <div class="capture-help">
+        <strong>撮影のポイント</strong>
+        <p id="capturePoint">財布の端が画面から切れないようにしてください。</p>
       </div>
-      <div class="photo-box">
-        <div class="example">見本：COACHと書かれた部分</div>
-        <strong>4. ブランド名が書かれた部分</strong>
-        <small>COACHの文字が大きく見えるように撮ってください。</small>
-        <input type="file" accept="image/*">
+
+      <label class="camera-button" for="cameraInput">
+        <span>📷</span><span>写真を撮る</span>
+      </label>
+      <input id="cameraInput" class="camera-input" type="file" accept="image/*" capture="environment">
+
+      <div class="preview-wrap hidden" id="previewWrap">
+        <img id="photoPreview" alt="撮影した写真の確認">
+        <button class="secondary full-button" type="button" onclick="retakePhoto()">撮り直す</button>
       </div>
-      <div class="photo-box">
-        <div class="example">見本：数字や英字があるタグ</div>
-        <strong>5. 数字や英字が書かれた部分</strong>
-        <small>見つからない場合は、そのまま次へ進めます。</small>
-        <input type="file" accept="image/*">
-      </div>
-      <div class="photo-box">
-        <div class="example">見本：ファスナーと金属部分</div>
-        <strong>6. ファスナー・金属部分</strong>
-        <small>できるだけ近くから、ぼやけないように撮ってください。</small>
-        <input type="file" accept="image/*">
+
+      <div class="photo-feedback hidden" id="photoFeedback">
+        写真を確認しました。次へ進めます。
       </div>
     </div>
-    <div class="notice">試作版のため、写真未選択でも動作確認できます。</div>
+
     <div class="actions">
-      <span></span>
-      <button class="primary" onclick="go(2)">写真を登録してAIに確認してもらう</button>
+      <button class="secondary hidden" id="photoBackButton" onclick="previousPhoto()">前の写真</button>
+      <button class="primary" id="photoNextButton" onclick="nextPhoto()" disabled>次の写真へ</button>
     </div>
   </section>
 
@@ -465,6 +477,65 @@
 </main>
 
 <script>
+
+const photoSteps = [
+  ['財布の正面','財布全体が入るように撮ってください','机の中央に置き、上からまっすぐ撮影します','財布の端が画面から切れないようにしてください。'],
+  ['財布の裏側','財布を裏返して撮ってください','正面と同じ距離・角度で撮影します','模様や傷が分かる明るさで撮影してください。'],
+  ['財布の内側','財布を開いて、中全体を撮ってください','カード入れや小銭入れの位置が分かるようにします','財布をできるだけ大きく開いてください。'],
+  ['ブランド名','COACHと書かれた部分を近くから撮ってください','文字が読める大きさまで近づきます','文字にピントを合わせ、光が反射しないようにしてください。'],
+  ['数字や英字','数字や英字が書かれた部分を撮ってください','タグ・刻印・内側の文字などを探します','見つからない場合は、次の版で「見つからない」を追加します。'],
+  ['ファスナー・金属部分','ファスナーと金属部分を近くから撮ってください','文字・形・傷が確認できるようにします','ぼやけない距離で、正面から撮影してください。']
+];
+let currentPhotoStep = 0;
+const capturedPhotos = new Array(photoSteps.length).fill(null);
+
+function renderPhotoStep(){
+  const item = photoSteps[currentPhotoStep];
+  document.getElementById('photoCount').textContent = `${currentPhotoStep+1} / ${photoSteps.length}`;
+  document.getElementById('photoTitle').textContent = item[0];
+  document.getElementById('sampleMain').textContent = item[1];
+  document.getElementById('sampleSub').textContent = item[2];
+  document.getElementById('capturePoint').textContent = item[3];
+  document.getElementById('photoBackButton').classList.toggle('hidden', currentPhotoStep===0);
+  const hasPhoto = !!capturedPhotos[currentPhotoStep];
+  document.getElementById('photoNextButton').disabled = !hasPhoto;
+  document.getElementById('photoNextButton').textContent = currentPhotoStep===photoSteps.length-1 ? 'AIで確認する' : '次の写真へ';
+  document.getElementById('previewWrap').classList.toggle('hidden', !hasPhoto);
+  document.getElementById('photoFeedback').classList.toggle('hidden', !hasPhoto);
+  document.querySelector('.camera-button').classList.toggle('hidden', hasPhoto);
+  if(hasPhoto) document.getElementById('photoPreview').src = capturedPhotos[currentPhotoStep];
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  renderPhotoStep();
+  document.getElementById('cameraInput').addEventListener('change',event=>{
+    const file = event.target.files && event.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = e => { capturedPhotos[currentPhotoStep]=e.target.result; renderPhotoStep(); };
+    reader.readAsDataURL(file);
+  });
+});
+function retakePhoto(){
+  capturedPhotos[currentPhotoStep]=null;
+  document.getElementById('cameraInput').value='';
+  renderPhotoStep();
+  document.getElementById('cameraInput').click();
+}
+function previousPhoto(){
+  if(currentPhotoStep>0){ currentPhotoStep--; renderPhotoStep(); window.scrollTo({top:0,behavior:'smooth'}); }
+}
+function nextPhoto(){
+  if(!capturedPhotos[currentPhotoStep]) return;
+  if(currentPhotoStep<photoSteps.length-1){
+    currentPhotoStep++;
+    document.getElementById('cameraInput').value='';
+    renderPhotoStep();
+    window.scrollTo({top:0,behavior:'smooth'});
+  } else {
+    go(2);
+  }
+}
+
 function go(n){
   for(let i=1;i<=5;i++){
     document.getElementById('step'+i).classList.toggle('hidden', i!==n);
